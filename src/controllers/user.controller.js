@@ -118,11 +118,6 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
-    const options = {
-        httpOnly: true,
-        secure: true
-    }
-
     // login
     return res
         .status(202)
@@ -140,12 +135,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const logoutUser = asyncHandler(async (req, res) => {
     // clear cookies and access and refresh tokens
-    await User.findByIdAndUpdate(req.user._id, {$unset: {refreshToken: 1}}, {new: true})
-
-    const options = {
-        httpOnly: true,
-        secure: true
-    }    
+    await User.findByIdAndUpdate(req.user._id, {$unset: {refreshToken: 1}}, {new: true}) 
 
     return res
     .status(200)

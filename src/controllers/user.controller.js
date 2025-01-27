@@ -205,11 +205,60 @@ const changePassword = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, {}, "Password changed successfully"))
 })
 
+const profile = asyncHandler(async (req, res) => {
+    const user = req.user
+
+    return res
+    .status(200)
+    .json(new apiResponse(200, user, "This is your profile"))
+})
+
+const editProfile = asyncHandler(async (req, res) => {
+
+    const user = req.user
+
+    const {fullName, email, username} = req.body
+    
+    if (!(fullName || email || username)) {
+        throw new apiError(401, "Atleast one field is required")
+    }
+
+    const usernameExists = await User.findOne({username})
+    if (usernameExists) {
+        throw new apiError(403, "Username already exists")
+    }
+
+    const emailExists = await User.findOne({email})
+    if (emailExists) {
+        throw new apiError(403, "Email already exists")
+    }
+
+    if (fullName) {
+        user.fullName = fullName
+    }
+    
+    if (email) {
+        user.email = email
+    }
+    
+    if (username) {
+        user.username = username
+    }
+
+    await user.save({validateBeforeSave: false})
+
+    return res
+    .status(200)
+    .json(new apiResponse(200, user, "Profile edited successfully"))
+})
+
 export {
     registerUser,
     loginUser,
     logoutUser,
     newAccessToken,
-    changePassword
+    changePassword,
+    profile,
+    editProfile
 }
 

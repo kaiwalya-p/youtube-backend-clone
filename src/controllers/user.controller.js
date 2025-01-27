@@ -181,10 +181,35 @@ const newAccessToken = asyncHandler(async (req, res) => {
         "Access and refresh token renewed"))
 })
 
+const changePassword = asyncHandler(async (req, res) => {
+    const {currentPassword, newPassword, confirmPassword} = req.body
+    if (!(currentPassword && newPassword && confirmPassword)) {
+        throw new apiError(401, "All fields are required")
+    }
+
+    if (newPassword !== confirmPassword) {
+        throw new apiError(400, "newPassword and confirmPassword must be same")
+    }
+
+    const user = await User.findById(req.user?._id)
+    const verifyCurrentPassword = await user.isPasswordCorrect(currentPassword)
+    if (!verifyCurrentPassword) {
+        throw new apiError(402, "Incorrect current password")
+    }
+
+    user.password = newPassword
+    await user.save({validateBeforeSave: false})
+
+    return res
+    .status(200)
+    .json(new apiResponse(200, {}, "Password changed successfully"))
+})
+
 export {
     registerUser,
     loginUser,
     logoutUser,
-    newAccessToken
+    newAccessToken,
+    changePassword
 }
 

@@ -206,11 +206,10 @@ const changePassword = asyncHandler(async (req, res) => {
 })
 
 const profile = asyncHandler(async (req, res) => {
-    const user = req.user
 
     return res
     .status(200)
-    .json(new apiResponse(200, user, "This is your profile"))
+    .json(new apiResponse(200, req.user, "This is your profile"))
 })
 
 const editProfile = asyncHandler(async (req, res) => {

@@ -135,7 +135,9 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const logoutUser = asyncHandler(async (req, res) => {
     // clear cookies and access and refresh tokens
-    await User.findByIdAndUpdate(req.user._id, {$unset: {refreshToken: 1}}, {new: true}) 
+    const user = req.user
+    user.refreshToken = ""
+    await user.save({validateBeforeSave: false})
 
     return res
     .status(200)
@@ -165,9 +167,7 @@ const newAccessToken = asyncHandler(async (req, res) => {
         throw new apiError(401, "Refresh token expired")
     }
 
-    const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)
-    console.log(newRefreshToken);
-    
+    const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)    
     
     return res
     .status(200)

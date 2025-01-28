@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { apiError } from "../utils/apiError.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
 
@@ -137,14 +137,14 @@ const logoutUser = asyncHandler(async (req, res) => {
     // clear cookies and access and refresh tokens
     const user = req.user
     user.refreshToken = ""
-    await user.save({validateBeforeSave: false})
+    await user.save({ validateBeforeSave: false })
 
     return res
-    .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json(new apiResponse(200, {}, "User logged out"))
-    
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new apiResponse(200, {}, "User logged out"))
+
 })
 
 const newAccessToken = asyncHandler(async (req, res) => {
@@ -167,22 +167,22 @@ const newAccessToken = asyncHandler(async (req, res) => {
         throw new apiError(401, "Refresh token expired")
     }
 
-    const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)    
-    
+    const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(user._id)
+
     return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", newRefreshToken, options)
-    .json(new apiResponse(
-        200,
-        {
-            accessToken, newRefreshToken
-        },
-        "Access and refresh token renewed"))
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", newRefreshToken, options)
+        .json(new apiResponse(
+            200,
+            {
+                accessToken, newRefreshToken
+            },
+            "Access and refresh token renewed"))
 })
 
 const changePassword = asyncHandler(async (req, res) => {
-    const {currentPassword, newPassword, confirmPassword} = req.body
+    const { currentPassword, newPassword, confirmPassword } = req.body
     if (!(currentPassword && newPassword && confirmPassword)) {
         throw new apiError(401, "All fields are required")
     }
@@ -198,36 +198,36 @@ const changePassword = asyncHandler(async (req, res) => {
     }
 
     user.password = newPassword
-    await user.save({validateBeforeSave: false})
+    await user.save({ validateBeforeSave: false })
 
     return res
-    .status(200)
-    .json(new apiResponse(200, {}, "Password changed successfully"))
+        .status(200)
+        .json(new apiResponse(200, {}, "Password changed successfully"))
 })
 
 const profile = asyncHandler(async (req, res) => {
 
     return res
-    .status(200)
-    .json(new apiResponse(200, req.user, "This is your profile"))
+        .status(200)
+        .json(new apiResponse(200, req.user, "This is your profile"))
 })
 
 const editProfile = asyncHandler(async (req, res) => {
 
     const user = req.user
 
-    const {fullName, email, username} = req.body
-    
+    const { fullName, email, username } = req.body
+
     if (!(fullName || email || username)) {
         throw new apiError(401, "Atleast one field is required")
     }
 
-    const usernameExists = await User.findOne({username})
+    const usernameExists = await User.findOne({ username })
     if (usernameExists) {
         throw new apiError(403, "Username already exists")
     }
 
-    const emailExists = await User.findOne({email})
+    const emailExists = await User.findOne({ email })
     if (emailExists) {
         throw new apiError(403, "Email already exists")
     }
@@ -235,23 +235,25 @@ const editProfile = asyncHandler(async (req, res) => {
     if (fullName) {
         user.fullName = fullName
     }
-    
+
     if (email) {
         user.email = email
     }
-    
+
     if (username) {
         user.username = username
     }
 
-    await user.save({validateBeforeSave: false})
+    await user.save({ validateBeforeSave: false })
 
     return res
-    .status(200)
-    .json(new apiResponse(200, user, "Profile edited successfully"))
+        .status(200)
+        .json(new apiResponse(200, user, "Profile edited successfully"))
 })
 
 const changeAvatar = asyncHandler(async (req, res) => {
+    const oldAvatarUrl = req.user.avatar
+
     const avatarLocalPath = req.file?.path
     if (!avatarLocalPath) {
         throw new apiError(404, "Avatar file is required")
@@ -274,12 +276,19 @@ const changeAvatar = asyncHandler(async (req, res) => {
         }
     ).select("-password -refreshToken")
 
+    const deletedFromCloudinary = await deleteFromCloudinary(oldAvatarUrl)
+    if (!deletedFromCloudinary) {
+        throw new apiError(502, "Failed to delete from cloudinary")
+    }
+
     return res
-    .status(200)
-    .json(new apiResponse(200, user, "Avatar changed successfully"))
+        .status(200)
+        .json(new apiResponse(200, user, "Avatar changed successfully"))
 })
 
 const changeCoverImage = asyncHandler(async (req, res) => {
+    const oldCoverImageUrl = req.user.coverImage
+
     const coverImageLocalPath = req.file?.path
     if (!coverImageLocalPath) {
         throw new apiError(404, "Avatar file is required")
@@ -302,9 +311,14 @@ const changeCoverImage = asyncHandler(async (req, res) => {
         }
     ).select("-password -refreshToken")
 
+    const deletedFromCloudinary = await deleteFromCloudinary(oldCoverImageUrl)
+    if (!deletedFromCloudinary) {
+        throw new apiError(502, "Failed to delete from cloudinary")
+    }
+
     return res
-    .status(200)
-    .json(new apiResponse(200, user, "coverImage changed successfully"))
+        .status(200)
+        .json(new apiResponse(200, user, "coverImage changed successfully"))
 })
 
 export {

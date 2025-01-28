@@ -251,6 +251,62 @@ const editProfile = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, user, "Profile edited successfully"))
 })
 
+const changeAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalPath = req.file?.path
+    if (!avatarLocalPath) {
+        throw new apiError(404, "Avatar file is required")
+    }
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+    if (!avatar.url) {
+        throw new apiError(500, "Error while uploading on cloudinary")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                avatar: avatar.url
+            }
+        },
+        {
+            new: true
+        }
+    ).select("-password -refreshToken")
+
+    return res
+    .status(200)
+    .json(new apiResponse(200, user, "Avatar changed successfully"))
+})
+
+const changeCoverImage = asyncHandler(async (req, res) => {
+    const coverImageLocalPath = req.file?.path
+    if (!coverImageLocalPath) {
+        throw new apiError(404, "Avatar file is required")
+    }
+
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+    if (!coverImage.url) {
+        throw new apiError(500, "Error while uploading on cloudinary")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                coverImage: coverImage.url
+            }
+        },
+        {
+            new: true
+        }
+    ).select("-password -refreshToken")
+
+    return res
+    .status(200)
+    .json(new apiResponse(200, user, "coverImage changed successfully"))
+})
+
 export {
     registerUser,
     loginUser,
@@ -258,6 +314,8 @@ export {
     newAccessToken,
     changePassword,
     profile,
-    editProfile
+    editProfile,
+    changeAvatar,
+    changeCoverImage
 }
 

@@ -64,11 +64,11 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // create user object, create entry in db
     const newUser = await User.create({
-        fullName,
-        username,
+        fullName: fullName.trim(),
+        username: username.toLowerCase().trim(),
         avatar: avatar.url,
         password,
-        email,
+        email: email.trim(),
         coverImage: coverImage?.url || ""
     })
 
@@ -205,7 +205,7 @@ const changePassword = asyncHandler(async (req, res) => {
         .json(new apiResponse(200, {}, "Password changed successfully"))
 })
 
-const profile = asyncHandler(async (req, res) => {
+const myProfile = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
@@ -233,15 +233,15 @@ const editProfile = asyncHandler(async (req, res) => {
     }
 
     if (fullName) {
-        user.fullName = fullName
+        user.fullName = fullName.trim()
     }
 
     if (email) {
-        user.email = email
+        user.email = email.trim()
     }
 
     if (username) {
-        user.username = username
+        user.username = username.toLowerCase().trim()
     }
 
     await user.save({ validateBeforeSave: false })
@@ -327,7 +327,7 @@ export {
     logoutUser,
     newAccessToken,
     changePassword,
-    profile,
+    myProfile,
     editProfile,
     changeAvatar,
     changeCoverImage

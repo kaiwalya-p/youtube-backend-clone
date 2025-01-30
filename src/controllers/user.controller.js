@@ -321,6 +321,74 @@ const changeCoverImage = asyncHandler(async (req, res) => {
         .json(new apiResponse(200, user, "coverImage changed successfully"))
 })
 
+const channel = asyncHandler(async (req, res) => {
+    const {username} = req.query
+    if (!username) {
+        throw new apiError(400, "Please enter a username")
+    }    
+
+    const channel = await User.aggregate([
+        {
+            $match: {
+                username: username.toLowerCase()
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "owner",
+                as: "subscribers"
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+        },
+        {
+            $addFields: {
+                subscribersCount: {
+                    $size: "$subscribers"
+                },
+                subscribedToCount: {
+                    $size: "$subscribedTo"
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: {$in: [req.user?._id, "$subscribers.subscriber"]},
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                username: 1,
+                fullName: 1,
+                avatar: 1,
+                coverImage: 1,
+                subscribersCount: 1,
+                subscribedToCount: 1,
+                isSubscribed: 1,
+                createdAt: 1
+            }
+        }
+    ])
+    
+    if (!channel?.length) {
+        throw new apiError(404, "Channel not found")
+    }
+
+    return res
+    .status(200)
+    .json(new apiResponse(200, channel[0], "Channel fetched successfully"))
+})
+
 export {
     registerUser,
     loginUser,
@@ -330,6 +398,7 @@ export {
     myProfile,
     editProfile,
     changeAvatar,
-    changeCoverImage
+    changeCoverImage,
+    channel
 }
 

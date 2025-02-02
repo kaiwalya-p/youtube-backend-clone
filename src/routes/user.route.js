@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registerUser, loginUser, logoutUser, newAccessToken, changePassword, myProfile, editProfile, changeAvatar, changeCoverImage, channel } from "../controllers/user.controller.js";
+import { registerUser, loginUser, logoutUser, newAccessToken, changePassword, myProfile, editProfile, changeAvatar, changeCoverImage, getChannel } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -33,7 +33,7 @@ userRouter.route("/change-avatar").post(verifyJWT, upload.single("avatar"), chan
 
 userRouter.route("/change-coverImage").post(verifyJWT, upload.single("coverImage"), changeCoverImage)
 
-mainRouter.route("/channel").get(channel)
+mainRouter.route("/getChannel").get(getChannel)
 
 export {
     userRouter,

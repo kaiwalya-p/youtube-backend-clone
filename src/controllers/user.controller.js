@@ -321,7 +321,7 @@ const changeCoverImage = asyncHandler(async (req, res) => {
         .json(new apiResponse(200, user, "coverImage changed successfully"))
 })
 
-const channel = asyncHandler(async (req, res) => {
+const getChannel = asyncHandler(async (req, res) => {
     const {username} = req.query
     if (!username) {
         throw new apiError(400, "Please enter a username")
@@ -399,6 +399,6 @@ export {
     editProfile,
     changeAvatar,
     changeCoverImage,
-    channel
+    getChannel
 }
 

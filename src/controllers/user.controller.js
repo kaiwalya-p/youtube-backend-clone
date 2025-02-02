@@ -136,9 +136,17 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const logoutUser = asyncHandler(async (req, res) => {
     // clear cookies and access and refresh tokens
-    const user = req.user
-    user.refreshToken = ""
-    await user.save({ validateBeforeSave: false })
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $unset: {
+                refreshToken: 1
+            }
+        },
+        {
+            new: true
+        }
+    )
 
     return res
         .status(200)

@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -389,6 +390,57 @@ const getChannel = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, channel[0], "Channel fetched successfully"))
 })
 
+const myWatchHistory = asyncHandler(async (req, res) => {
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user?._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+    
+    if (!user?.length) {
+        throw new apiError(503, "Error while fetching watch history")
+    }
+
+    return res
+    .status(200)
+    .json(new apiResponse(200, user[0].watchHistory, "Watch history fetched successfully"))
+})
+
 export {
     registerUser,
     loginUser,
@@ -399,6 +451,7 @@ export {
     editProfile,
     changeAvatar,
     changeCoverImage,
-    getChannel
+    getChannel,
+    myWatchHistory
 }
 
